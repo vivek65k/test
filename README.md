@@ -1,13 +1,12 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { importProvidersFrom } from '@angular/core';
-import { AppComponent } from './app/app.component';
-import { RouterModule } from '@angular/router';
-import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
-import { provideAnimations } from '@angular/platform-browser/animations';
+<ckeditor [editor]="Editor" [(ngModel)]="editorData"></ckeditor>
 
-bootstrapApplication(AppComponent, {
-  providers: [
-    provideAnimations(),
-    importProvidersFrom(CKEditorModule, RouterModule)
-  ]
-});
+
+
+
+import * as ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+
+export class AppComponent {
+  public Editor = ClassicEditor;
+  public editorData = '<p>Hllo from CKEditor 5!</p>';
+}
+
