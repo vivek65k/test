@@ -11,6 +11,6 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  public Editor = ClassicEditor;
+  public Editor: any = ClassicEditor;
   public editorControl = new FormControl('<p>Hello from CKEditor 5!</p>');
 }
