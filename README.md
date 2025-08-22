@@ -1,16 +1,17 @@
-import { Component } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-
-@Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [CKEditorModule, ReactiveFormsModule],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
-})
-export class AppComponent {
-  public Editor: any = ClassicEditor;
-  public editorControl = new FormControl('<p>Hello from CKEditor 5!</p>');
+private normalizeValue(value: any): string[] {
+  if (Array.isArray(value)) {
+    if (value.length > 0 && typeof value[0] === 'object' && 'value' in value[0]) {
+      return value.flatMap((v: any) =>
+        Array.isArray(v.value) ? v.value : [v.value]
+      ).map(String);
+    }
+    return value.map(String);
+  }
+  return [String(value)];
 }
+
+
+const globalSearch: any = {};
+Object.entries(globalFilter).forEach(([key, value]) => {
+  globalFilter[key] = this.normalizeValue(value);
+});
