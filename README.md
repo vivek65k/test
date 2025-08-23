@@ -1,21 +1,16 @@
-function normalizeModelTypes(models: any[]): any[] {
-  return models.map(model => {
+function collectDeepestValues(models: any[]): string[] {
+  const result: string[] = [];
+
+  function traverse(model: any) {
     if (model.items && model.items.length > 0) {
-      // recurse
-      const normalizedChildren = normalizeModelTypes(model.items);
-
-      // ✅ keep label & children, but replace parent value with *deepest child value*
-      return {
-        ...model,
-        value: normalizedChildren[normalizedChildren.length - 1].value,
-        items: normalizedChildren
-      };
+      // go deeper for all children
+      model.items.forEach((child: any) => traverse(child));
+    } else {
+      // leaf node (deepest)
+      result.push(model.value);
     }
+  }
 
-    // leaf node – return as is
-    return {
-      label: model.label,
-      value: model.value
-    };
-  });
+  models.forEach(m => traverse(m));
+  return result;
 }
