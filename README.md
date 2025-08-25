@@ -1,17 +1,13 @@
-function normalizeFilterItems(items: any[]): any[] {
-  const result: any[] = []
+ if (nextFilter.type === this.gridColumnSearchType.Date) {
+      const beforeKey = `${nextFilter.field}Before`
+      const laterKey = `${nextFilter.field}LaterThan`
 
-  items.forEach(item => {
-    if (Array.isArray(item.value)) {
-      // workflowStatus style
-      item.value.forEach((val: string) => {
-        result.push({ value: val, label: item.label })
-      })
-    } else {
-      // vlName style
-      result.push(item)
+      nextFilter.value = [
+        nextGroup.search[laterKey] || null,
+        nextGroup.search[beforeKey] || null
+      ].filter(Boolean)  // keep only non-null values
+
+      // ✅ Patch into form controls too
+      this.searchFrom.get(beforeKey)?.setValue(nextGroup.search[beforeKey])
+      this.searchFrom.get(laterKey)?.setValue(nextGroup.search[laterKey])
     }
-  })
-
-  return result
-}
