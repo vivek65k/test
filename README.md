@@ -1,37 +1,31 @@
-// ✅ This will take options and return all child items in a flat array
-flattenOptions(options: any[]): any[] {
+flattenOptions(options: any[], parentLabel: string = ''): any[] {
   const flat: any[] = [];
-  for (const opt of options) {
+  for (const opt of options || []) {
     if (opt.items && Array.isArray(opt.items)) {
-      flat.push(...this.flattenOptions(opt.items)); // go deeper
+      // Pass parent label down
+      flat.push(...this.flattenOptions(opt.items, opt.label));
     } else {
-      flat.push(opt);
+      flat.push({
+        label: parentLabel || opt.label,  // 👈 Always take top-level parent label
+        value: opt.value
+      });
     }
   }
   return flat;
 }
 
 
+if (search.field === 'modelType') {
+  const flatOptions = this.flattenOptions(search.options || []);
 
-for (const search of this.searchItems) {
-  if (search.field === 'modelType') {
-    // Flatten all nested options
-    const flatOptions = this.flattenOptions(search.options);
+  const selected = flatOptions.find(o => o.value === search.value?.[0]);
 
-    // Find the matching option
-    const selected = flatOptions.find(o => o.value === search.value[0]);
-
-    // Add the form control with correct default
-    if (selected) {
-      this.searchFrom.addControl(
-        search.field,
-        new FormControl([selected.value]) // ✅ works with dropdown
-      );
-    } else {
-      this.searchFrom.addControl(search.field, new FormControl(search.value));
-    }
+  if (selected) {
+    this.searchFrom.addControl(
+      search.field,
+      new FormControl([selected.value])
+    );
   } else {
-    // Existing logic for other fields
     this.searchFrom.addControl(search.field, new FormControl(search.value));
   }
 }
