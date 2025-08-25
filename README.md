@@ -1,6 +1,12 @@
-if (key === 'workflowCompletionDate') {
-        // always save as [laterThan, before]
-        const later = this.searchForm.get(`${key}LaterThan`)?.value || null;
-        const before = this.searchForm.get(`${key}Before`)?.value || null;
+  if (key.endsWith('Before') || key.endsWith('LaterThan')) {
+        const baseKey = key.replace('Before', '').replace('LaterThan', '');
 
-        next.search[key] = [later, before];   // push both into array
+        if (!next.search[baseKey]) {
+          next.search[baseKey] = [];
+        }
+
+        if (key.endsWith('LaterThan')) {
+          next.search[baseKey][0] = value;   // index 0 = later
+        } else if (key.endsWith('Before')) {
+          next.search[baseKey][1] = value;   // index 1 = before
+        }
