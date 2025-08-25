@@ -1,13 +1,6 @@
- if (nextFilter.type === this.gridColumnSearchType.Date) {
-      const beforeKey = `${nextFilter.field}Before`
-      const laterKey = `${nextFilter.field}LaterThan`
+if (key === 'workflowCompletionDate') {
+        // always save as [laterThan, before]
+        const later = this.searchForm.get(`${key}LaterThan`)?.value || null;
+        const before = this.searchForm.get(`${key}Before`)?.value || null;
 
-      nextFilter.value = [
-        nextGroup.search[laterKey] || null,
-        nextGroup.search[beforeKey] || null
-      ].filter(Boolean)  // keep only non-null values
-
-      // ✅ Patch into form controls too
-      this.searchFrom.get(beforeKey)?.setValue(nextGroup.search[beforeKey])
-      this.searchFrom.get(laterKey)?.setValue(nextGroup.search[laterKey])
-    }
+        next.search[key] = [later, before];   // push both into array
