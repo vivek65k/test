@@ -1,34 +1,74 @@
+// Utility: flatten tree into value → labelPath
+function flattenOptions(options: any[], parentLabel: string = ''): Record<string, string> {
+  let map: Record<string, string> = {};
 
-  let selectedOption: any = null;
+  for (const opt of options) {
+    const labelPath = parentLabel ? `${parentLabel} > ${opt.label}` : opt.label;
+    map[opt.value] = labelPath;
 
-  if (search.options && search.value?.length) {
-    const rawValue = search.value[0];
-
-    // 🔎 Find option by nested search
-    const findOption = (options: any[], value: string): any => {
-      for (const opt of options) {
-        if (opt.value === value) return opt;
-        if (opt.items) {
-          const found = findOption(opt.items, value);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    selectedOption = findOption(search.options, rawValue);
+    if (opt.items && opt.items.length > 0) {
+      Object.assign(map, flattenOptions(opt.items, labelPath));
+    }
   }
 
-  if (selectedOption) {
-    // ✅ Store both value + label
-    this.searchFrom.addControl(
-      search.field,
-      new FormControl([{ value: selectedOption.value, label: selectedOption.label }])
-    );
-  } else {
-    // fallback if no match found
-    this.searchFrom.addControl(search.field, new FormControl(search.value));
+  return map;
+}
+
+// --- Inside your initForm ---
+if (search.field === 'modelType') {
+  const valueMap = flattenOptions(search.options);   // build dictionary
+
+  const selectedLabels = (search.value || []).map((val: string) =>
+    valueMap[val] || val   // fallback to raw if not found
+  );
+
+  console.log('Resolved labels for ModelType:', selectedLabels);
+
+  this.searchFrom.addControl(
+    search.field,
+    new FormControl(search.value)   // keep raw values for API
+  );
+
+  // 👉 if dropdown needs both value + label (some libs do):
+  // this.searchFrom.addControl(
+  //   search.field,
+  //   new FormControl(selectedLabels.map((label, i) => ({ value: search.value[i], label })))
+  // );
+}
+// Utility: flatten tree into value → labelPath
+function flattenOptions(options: any[], parentLabel: string = ''): Record<string, string> {
+  let map: Record<string, string> = {};
+
+  for (const opt of options) {
+    const labelPath = parentLabel ? `${parentLabel} > ${opt.label}` : opt.label;
+    map[opt.value] = labelPath;
+
+    if (opt.items && opt.items.length > 0) {
+      Object.assign(map, flattenOptions(opt.items, labelPath));
+    }
   }
 
-  console.log('Default modelType set as:', selectedOption);
+  return map;
+}
 
+// --- Inside your initForm ---
+if (search.field === 'modelType') {
+  const valueMap = flattenOptions(search.options);   // build dictionary
+
+  const selectedLabels = (search.value || []).map((val: string) =>
+    valueMap[val] || val   // fallback to raw if not found
+  );
+
+  console.log('Resolved labels for ModelType:', selectedLabels);
+
+  this.searchFrom.addControl(
+    search.field,
+    new FormControl(search.value)   // keep raw values for API
+  );
+
+  // 👉 if dropdown needs both value + label (some libs do):
+  // this.searchFrom.addControl(
+  //   search.field,
+  //   new FormControl(selectedLabels.map((label, i) => ({ value: search.value[i], label })))
+  // );
+}
