@@ -1,30 +1,30 @@
-flattenOptions(options: any[], parentLabel: string = ''): any[] {
-  const flat: any[] = [];
-  for (const opt of options || []) {
-    if (opt.items && Array.isArray(opt.items)) {
-      // Pass parent label down
-      flat.push(...this.flattenOptions(opt.items, opt.label));
-    } else {
-      flat.push({
-        label: parentLabel || opt.label,  // 👈 Always take top-level parent label
-        value: opt.value
-      });
+getTopLevelOptionLabel(options: any[], value: string): string | null {
+  for (const opt of options) {
+    if (opt.value === value) {
+      return opt.label; // direct match
+    }
+    if (opt.items) {
+      // check children
+      const found = this.getTopLevelOptionLabel(opt.items, value);
+      if (found) {
+        return opt.label; // 👈 return parent instead of child
+      }
     }
   }
-  return flat;
+  return null;
 }
 
 
 if (search.field === 'modelType') {
-  const flatOptions = this.flattenOptions(search.options || []);
+  const parentLabel = this.getTopLevelOptionLabel(search.options, search.value?.[0]);
 
-  const selected = flatOptions.find(o => o.value === search.value?.[0]);
-
-  if (selected) {
+  if (parentLabel) {
     this.searchFrom.addControl(
       search.field,
-      new FormControl([selected.value])
+      new FormControl([search.value?.[0]])  // keep real value
     );
+
+    console.log('Default label should be:', parentLabel);
   } else {
     this.searchFrom.addControl(search.field, new FormControl(search.value));
   }
