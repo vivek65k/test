@@ -1,24 +1,37 @@
-function normalizeToString(val: string | string[]): string {
-  if (Array.isArray(val)) {
-    return val.length > 0 ? val[0] : '';   // pick first element or empty
+// ✅ This will take options and return all child items in a flat array
+flattenOptions(options: any[]): any[] {
+  const flat: any[] = [];
+  for (const opt of options) {
+    if (opt.items && Array.isArray(opt.items)) {
+      flat.push(...this.flattenOptions(opt.items)); // go deeper
+    } else {
+      flat.push(opt);
+    }
   }
-  return val;
+  return flat;
 }
 
 
-if (key.endsWith('LaterThan') || key.endsWith('Before')) {
-  const baseKey = key.replace('Before', '').replace('LaterThan', '');
 
-  if (!next.search[baseKey]) {
-    next.search[baseKey] = [];
-  }
+for (const search of this.searchItems) {
+  if (search.field === 'modelType') {
+    // Flatten all nested options
+    const flatOptions = this.flattenOptions(search.options);
 
-  if (key.endsWith('LaterThan')) {
-    next.search[baseKey][0] = normalizeToString(value);
-  } else if (key.endsWith('Before')) {
-    next.search[baseKey][1] = normalizeToString(value);
+    // Find the matching option
+    const selected = flatOptions.find(o => o.value === search.value[0]);
+
+    // Add the form control with correct default
+    if (selected) {
+      this.searchFrom.addControl(
+        search.field,
+        new FormControl([selected.value]) // ✅ works with dropdown
+      );
+    } else {
+      this.searchFrom.addControl(search.field, new FormControl(search.value));
+    }
+  } else {
+    // Existing logic for other fields
+    this.searchFrom.addControl(search.field, new FormControl(search.value));
   }
-} else {
-  // fallback for normal fields
-  next.search[key] = value;
 }
