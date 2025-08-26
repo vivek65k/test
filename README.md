@@ -1,74 +1,38 @@
-// Utility: flatten tree into value → labelPath
-function flattenOptions(options: any[], parentLabel: string = ''): Record<string, string> {
-  let map: Record<string, string> = {};
+static validSearchCriteria(min: number, criteriaName: 'ModelId' | 'WorkflowIds'): ValidatorFn {
+   
+    const regexResolver = (() => {
+      const patterns: { [key: string]: () => RegExp } = {
+        ModelId: () => new RegExp(/^M{2}([\s,]*\d+)+$/),
+        WorkflowIds: () => new RegExp(/^[a-zA-Z]{1,2}\d+(,[a-zA-Z]{1,2}\d+)*$/)
+      };
+      return (key: string): RegExp =>
+        (patterns[key] && typeof patterns[key] === 'function')
+          ? patterns[key]() : /.*/; 
+    })();
 
-  for (const opt of options) {
-    const labelPath = parentLabel ? `${parentLabel} > ${opt.label}` : opt.label;
-    map[opt.value] = labelPath;
+   
+    return (control: AbstractControl): ValidationErrors | null => {
+      const val: any = control?.value ?? '';
+      const regex = regexResolver(criteriaName);
 
-    if (opt.items && opt.items.length > 0) {
-      Object.assign(map, flattenOptions(opt.items, labelPath));
-    }
+
+      const clean = (x: string) =>
+        (x || '')
+          .replace(/[\n\t,]/g, '')
+          .trim();
+
+      switch (true) {
+        case !val || val.length === 0:
+          return null;
+
+        case val.length < min:
+          return { [`invalid${criteriaName}Length`]: true };
+
+        default:
+          const transformed = clean(val);
+          return regex.test(transformed)
+            ? null
+            : { [`invalid${criteriaName}Pattern`]: true };
+      }
+    };
   }
-
-  return map;
-}
-
-// --- Inside your initForm ---
-if (search.field === 'modelType') {
-  const valueMap = flattenOptions(search.options);   // build dictionary
-
-  const selectedLabels = (search.value || []).map((val: string) =>
-    valueMap[val] || val   // fallback to raw if not found
-  );
-
-  console.log('Resolved labels for ModelType:', selectedLabels);
-
-  this.searchFrom.addControl(
-    search.field,
-    new FormControl(search.value)   // keep raw values for API
-  );
-
-  // 👉 if dropdown needs both value + label (some libs do):
-  // this.searchFrom.addControl(
-  //   search.field,
-  //   new FormControl(selectedLabels.map((label, i) => ({ value: search.value[i], label })))
-  // );
-}
-// Utility: flatten tree into value → labelPath
-function flattenOptions(options: any[], parentLabel: string = ''): Record<string, string> {
-  let map: Record<string, string> = {};
-
-  for (const opt of options) {
-    const labelPath = parentLabel ? `${parentLabel} > ${opt.label}` : opt.label;
-    map[opt.value] = labelPath;
-
-    if (opt.items && opt.items.length > 0) {
-      Object.assign(map, flattenOptions(opt.items, labelPath));
-    }
-  }
-
-  return map;
-}
-
-// --- Inside your initForm ---
-if (search.field === 'modelType') {
-  const valueMap = flattenOptions(search.options);   // build dictionary
-
-  const selectedLabels = (search.value || []).map((val: string) =>
-    valueMap[val] || val   // fallback to raw if not found
-  );
-
-  console.log('Resolved labels for ModelType:', selectedLabels);
-
-  this.searchFrom.addControl(
-    search.field,
-    new FormControl(search.value)   // keep raw values for API
-  );
-
-  // 👉 if dropdown needs both value + label (some libs do):
-  // this.searchFrom.addControl(
-  //   search.field,
-  //   new FormControl(selectedLabels.map((label, i) => ({ value: search.value[i], label })))
-  // );
-}
