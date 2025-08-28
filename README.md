@@ -1,29 +1,38 @@
-static validSearchCriteria(min: number, criteriaName: 'ModelId' | 'WorkflowIds'): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const v = (control?.value ?? '').toString();
-    return !v
-      ? null
-      : v.length < min
-        ? { [`invalid${criteriaName}Length`]: true }
-        : new RegExp(
-            criteriaName === 'ModelId'
-              ? '^M{2}([\\s,]*\\d+)+$'
-              : '^[a-zA-Z]{1,2}\\d+(,[a-zA-Z]{1,2}\\d+)*$'
-          ).test(
-            v.replace(/[\n\t,]/g, '').trim()
-          )
-          ? null
-          : { [`invalid${criteriaName}Pattern`]: true };
-  };
+clearSearchFields() {
+  this.advancedSearchGroupTool?.onClear();
+
+  if (this.advancedSearchGroupTool) {
+    this.advancedSearchGroupTool.executed = false;
+  }
+
+  this.filters = {};
+  this.selectedItem = [];
+  this.isSelectedAll = false;
+  this.data = [];
+  this.secondTableLoad = false;
+  this.isFirstLoad = true;
+  this.documentInventorytable?.reset();
+  this.disableSearch = true;
+  this.commonGridService.onClearFilters();
+
+  // reset search form properly
+  this.searchForm.reset();
+  this.searchForm.markAsPristine();
+  this.searchForm.markAsUntouched();
+  this.searchForm.updateValueAndValidity();
 }
 
 
-static validSearchCriteria(min: number, t: 'ModelId' | 'WorkflowIds'): ValidatorFn {
-  return (c: AbstractControl): ValidationErrors | null =>
-    !((x => x && x.length >= min)(c?.value))
-      ? (c?.value ? { [`invalid${t}Length`]: true } : null)
-      : ((r => r.test((c.value + '').replace(/[\n\t,]/g, '').trim()))
-          (new RegExp(t < 'N' ? '^M{2}([\\s,]*\\d+)+$' : '^[a-zA-Z]{1,2}\\d+(,[a-zA-Z]{1,2}\\d+)*$')))
-        ? null
-        : { [`invalid${t}Pattern`]: true };
+get isSearchEnabled(): boolean {
+  if (!this.searchForm.valid) return false;
+
+  return Object.values(this.searchForm.value).some(value => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    if (value === null || value === undefined) {
+      return false;
+    }
+    return value.toString().trim().length > 0;
+  });
 }
