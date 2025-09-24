@@ -1,17 +1,18 @@
-orgSelectedItems(event: any) {
+orgSelectedItems(event: any[]) {
+  // keys of rows on current page
   const currentPageKeys = this.data.map(
     item => `${item.docId}-${item.modelId}-${item.wfInstanceId}`
   );
 
-  // 1. Remove deselected rows from current page
+  // remove rows from this page (to avoid duplicates or stale)
   this.selectedItem = this.selectedItem.filter(
     item => !currentPageKeys.includes(
       `${item.docId}-${item.modelId}-${item.wfInstanceId}`
     )
   );
 
-  // 2. Add back the new selected rows from this page
-  event.forEach((row: any) => {
+  // add back the rows that are actually selected on this page
+  event.forEach(row => {
     const rowKey = `${row.docId}-${row.modelId}-${row.wfInstanceId}`;
     const exists = this.selectedItem.some(
       item => `${item.docId}-${item.modelId}-${item.wfInstanceId}` === rowKey
@@ -21,5 +22,5 @@ orgSelectedItems(event: any) {
     }
   });
 
-  console.log('Final selectedItem:', this.selectedItem);
+  console.log('Parent selectedItem:', this.selectedItem);
 }
