@@ -1,26 +1,29 @@
-orgSelectedItems(event: any[]) {
-  // keys of rows on current page
-  const currentPageKeys = this.data.map(
-    item => `${item.docId}-${item.modelId}-${item.wfInstanceId}`
-  );
+private buildFilterDto(): any {
+  let filterDto: { [key: string]: string | string[] } = {};
 
-  // remove rows from this page (to avoid duplicates or stale)
-  this.selectedItem = this.selectedItem.filter(
-    item => !currentPageKeys.includes(
-      `${item.docId}-${item.modelId}-${item.wfInstanceId}`
-    )
-  );
+  // workflowStatus
+  if (this.filters['workFlowStatus']) {
+    filterDto['workFlowStatus'] = (this.filters['workFlowStatus'] as string[])
+      .flat()
+      .map((item: string | string[]) => (Array.isArray(item) ? item[0] : item));
+  }
 
-  // add back the rows that are actually selected on this page
-  event.forEach(row => {
-    const rowKey = `${row.docId}-${row.modelId}-${row.wfInstanceId}`;
-    const exists = this.selectedItem.some(
-      item => `${item.docId}-${item.modelId}-${item.wfInstanceId}` === rowKey
-    );
-    if (!exists) {
-      this.selectedItem.push(row);
+  // workflowType
+  if (this.filters['workFlowType']) {
+    filterDto['workFlowType'] = (this.filters['workFlowType'] as string[])
+      .flat()
+      .map((item: string | string[]) => (Array.isArray(item) ? item[0] : item));
+  }
+
+  // normal filters
+  Object.entries(this.filters).forEach(([key, value]) => {
+    if (key !== 'workFlowStatus' && key !== 'workFlowType' && value?.length) {
+      filterDto[key] = value;
     }
   });
 
-  console.log('Parent selectedItem:', this.selectedItem);
+  // ✅ merge with advanceSearchParams
+  filterDto = this.mergeFilters(filterDto, this.advanceSearchParams?.search ?? {});
+
+  return filterDto;
 }
