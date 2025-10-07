@@ -1,29 +1,24 @@
-private buildFilterDto(): any {
-  let filterDto: { [key: string]: string | string[] } = {};
-
-  // workflowStatus
-  if (this.filters['workFlowStatus']) {
-    filterDto['workFlowStatus'] = (this.filters['workFlowStatus'] as string[])
-      .flat()
-      .map((item: string | string[]) => (Array.isArray(item) ? item[0] : item));
-  }
-
-  // workflowType
-  if (this.filters['workFlowType']) {
-    filterDto['workFlowType'] = (this.filters['workFlowType'] as string[])
-      .flat()
-      .map((item: string | string[]) => (Array.isArray(item) ? item[0] : item));
-  }
-
-  // normal filters
-  Object.entries(this.filters).forEach(([key, value]) => {
-    if (key !== 'workFlowStatus' && key !== 'workFlowType' && value?.length) {
-      filterDto[key] = value;
+  const deepMerge = (target: any, source: any) => {
+    const output = { ...target };
+    if (typeof target === 'object' && typeof source === 'object') {
+      Object.keys(source).forEach(key => {
+        if (Array.isArray(source[key])) {
+          output[key] = Array.isArray(target[key])
+            ? Array.from(new Set([...target[key], ...source[key]]))
+            : [...source[key]];
+        } else if (
+          source[key] &&
+          typeof source[key] === 'object' &&
+          !Array.isArray(source[key])
+        ) {
+          output[key] = deepMerge(target[key] || {}, source[key]);
+        } else {
+          output[key] = source[key];
+        }
+      });
     }
-  });
+    return output;
+  };
 
-  // ✅ merge with advanceSearchParams
-  filterDto = this.mergeFilters(filterDto, this.advanceSearchParams?.search ?? {});
-
-  return filterDto;
-}
+  // Perform deep merge of old + new filters
+  const combinedFilters = deepMerge(event.filterDto || {}, filters?.filters || {});
