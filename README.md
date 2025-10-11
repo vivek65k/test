@@ -1,24 +1,47 @@
-  const deepMerge = (target: any, source: any) => {
-    const output = { ...target };
-    if (typeof target === 'object' && typeof source === 'object') {
-      Object.keys(source).forEach(key => {
-        if (Array.isArray(source[key])) {
-          output[key] = Array.isArray(target[key])
-            ? Array.from(new Set([...target[key], ...source[key]]))
-            : [...source[key]];
-        } else if (
-          source[key] &&
-          typeof source[key] === 'object' &&
-          !Array.isArray(source[key])
-        ) {
-          output[key] = deepMerge(target[key] || {}, source[key]);
-        } else {
-          output[key] = source[key];
-        }
-      });
-    }
-    return output;
+fetchData(event?: any, filters?: any) {
+  const prevFilters = this.filters || {};
+  const newFilters = {
+    ...(filters?.filters || {}),
+    ...(event?.filterDto || {}),
   };
 
-  // Perform deep merge of old + new filters
-  const combinedFilters = deepMerge(event.filterDto || {}, filters?.filters || {});
+  const updateFilter: any = {};
+
+  // Step 1: Add or update valid filters
+  Object.entries(newFilters).forEach(([key, val]) => {
+    if (
+      val !== null &&
+      val !== undefined &&
+      val !== '' &&
+      (!Array.isArray(val) || val.length > 0)
+    ) {
+      updateFilter[key] = val;
+    }
+  });
+
+  // Step 2: Remove keys that were in old filters but not in new ones
+  Object.keys(prevFilters).forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(newFilters, key)) {
+      console.log(`🗑️ Clearing key because it's missing in new filters: ${key}`);
+      // skip adding it → effectively deletes it
+    } else if (
+      newFilters[key] === null ||
+      newFilters[key] === undefined ||
+      newFilters[key] === '' ||
+      (Array.isArray(newFilters[key]) && newFilters[key].length === 0)
+    ) {
+      console.log(`🗑️ Clearing key because new value is empty: ${key}`);
+      // skip adding it → effectively deletes it
+    } else {
+      updateFilter[key] = newFilters[key];
+    }
+  });
+
+  console.log('✅ Final updateFilter:', updateFilter);
+
+  this.loaderService.show({ showMask: true });
+  this.filters = updateFilter;
+  this.currentPage = event?.current || this.currentPage;
+  this.defaultPageSize = event?.pageSize || this.defaultPageSize;
+  this.sortOptions = event?.sorts || this.sortOptions;
+}
