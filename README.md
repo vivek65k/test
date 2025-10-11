@@ -1,15 +1,15 @@
-  const prevFilters = this.filters || {};
+  const oldFilters = this.filters || {};
   const tableFilters = event?.filterDto || {};
   const advFilters = filters?.filters || {};
 
-  // Step 1️⃣ Combine both table & advanced filters
-  const combined = { ...advFilters, ...tableFilters };
+  // 1️⃣ Merge both filter sources
+  const incoming = { ...advFilters, ...tableFilters };
 
-  // Step 2️⃣ Create new final object
+  // 2️⃣ Create new final object
   const updatedFilters: any = {};
 
-  // Step 3️⃣ Merge & clean up valid values
-  Object.entries(combined).forEach(([key, val]) => {
+  // 3️⃣ Add all valid keys
+  Object.entries(incoming).forEach(([key, val]) => {
     if (
       val !== null &&
       val !== undefined &&
@@ -20,20 +20,23 @@
     }
   });
 
-  // Step 4️⃣ Keep previously active filters if they weren’t cleared or overridden
-  Object.entries(prevFilters).forEach(([key, oldVal]) => {
-    // If the new combined filters didn’t include this key (not cleared)
-    // → keep it as is
-    if (
-      !Object.prototype.hasOwnProperty.call(combined, key) &&
-      oldVal !== null &&
-      oldVal !== undefined &&
-      oldVal !== '' &&
-      (!Array.isArray(oldVal) || oldVal.length > 0)
+  // 4️⃣ Remove keys that existed before but now missing from both sources
+  Object.keys(oldFilters).forEach((key) => {
+    const inEvent = Object.prototype.hasOwnProperty.call(tableFilters, key);
+    const inAdv = Object.prototype.hasOwnProperty.call(advFilters, key);
+
+    // Case: field not present in either filter payloads → remove it
+    if (!inEvent && !inAdv) {
+      console.log(`🗑️ Removing missing filter: ${key}`);
+      delete updatedFilters[key];
+    }
+
+    // Case: field present but cleared (null, empty, etc.)
+    else if (
+      (inEvent && (tableFilters[key] === null || tableFilters[key] === '' || (Array.isArray(tableFilters[key]) && tableFilters[key].length === 0))) ||
+      (inAdv && (advFilters[key] === null || advFilters[key] === '' || (Array.isArray(advFilters[key]) && advFilters[key].length === 0)))
     ) {
-      updatedFilters[key] = oldVal;
+      console.log(`🗑️ Removing cleared filter: ${key}`);
+      delete updatedFilters[key];
     }
   });
-
-  // Step 5️⃣ Apply final cleaned filter set
-  console.log("🧩 Final Filters:", updatedFilters);
