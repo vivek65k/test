@@ -1,17 +1,15 @@
-fetchData(event?: any, filters?: any) {
-  // 1️⃣ Extract both sources
+  const prevFilters = this.filters || {};
   const tableFilters = event?.filterDto || {};
   const advFilters = filters?.filters || {};
-  const oldFilters = this.filters || {};
 
-  // 2️⃣ Merge both incoming sources (table + advanced)
-  const incoming = { ...advFilters, ...tableFilters };
+  // Step 1️⃣ Combine both table & advanced filters
+  const combined = { ...advFilters, ...tableFilters };
 
-  // 3️⃣ Initialize a clean new filter object
+  // Step 2️⃣ Create new final object
   const updatedFilters: any = {};
 
-  // 4️⃣ Merge logic — add/update valid values
-  Object.entries(incoming).forEach(([key, val]) => {
+  // Step 3️⃣ Merge & clean up valid values
+  Object.entries(combined).forEach(([key, val]) => {
     if (
       val !== null &&
       val !== undefined &&
@@ -22,28 +20,20 @@ fetchData(event?: any, filters?: any) {
     }
   });
 
-  // 5️⃣ Remove cleared or missing keys
-  Object.keys(oldFilters).forEach((key) => {
-    // If missing or empty in new filters, drop it
+  // Step 4️⃣ Keep previously active filters if they weren’t cleared or overridden
+  Object.entries(prevFilters).forEach(([key, oldVal]) => {
+    // If the new combined filters didn’t include this key (not cleared)
+    // → keep it as is
     if (
-      !Object.prototype.hasOwnProperty.call(incoming, key) ||
-      incoming[key] === null ||
-      incoming[key] === undefined ||
-      incoming[key] === '' ||
-      (Array.isArray(incoming[key]) && incoming[key].length === 0)
+      !Object.prototype.hasOwnProperty.call(combined, key) &&
+      oldVal !== null &&
+      oldVal !== undefined &&
+      oldVal !== '' &&
+      (!Array.isArray(oldVal) || oldVal.length > 0)
     ) {
-      console.log(`🗑️ Removing cleared filter: ${key}`);
-      delete updatedFilters[key];
+      updatedFilters[key] = oldVal;
     }
   });
 
-  // 6️⃣ Assign and refresh UI
-  this.filters = updatedFilters;
-
-  console.log('✅ Final Unified Filters:', this.filters);
-
-  this.loaderService.show({ showMask: true });
-  this.currentPage = event?.current || this.currentPage;
-  this.defaultPageSize = event?.pageSize || this.defaultPageSize;
-  this.sortOptions = event?.sorts || this.sortOptions;
-}
+  // Step 5️⃣ Apply final cleaned filter set
+  console.log("🧩 Final Filters:", updatedFilters);
