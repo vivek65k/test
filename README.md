@@ -1,4 +1,4 @@
-const prevFilters = this.filters || {};
+  const prevFilters = this.filters || {};
   const tableFilters = event?.filterDto || {};
   const advFilters = filters?.filters || {};
 
@@ -37,3 +37,4 @@ const prevFilters = this.filters || {};
 
   // Step 5️⃣ Apply final cleaned filter set
   console.log("🧩 Final Filters:", updatedFilters);
+  this.filters = updatedFilters;
