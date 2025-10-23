@@ -1,13 +1,11 @@
 fetchData(event?: any, filters?: any): void {
   const prevFilters = { ...(this.filters || {}) };
   const tableFilters = event?.filterDto || {};
-  const advFilters = filters?.filters || this.advFiltersList || {};
-  this.advFiltersList = advFilters;
+  const advFilters = this.advFiltersList || filters?.filters || {};
 
-  // STEP 1️⃣ – detect which keys were cleared
+  // STEP 1️⃣ - Detect cleared keys (empty or null)
   const clearedKeys: string[] = [];
 
-  // Check for cleared table filters
   Object.entries(tableFilters).forEach(([key, val]) => {
     if (
       val === null ||
@@ -19,7 +17,6 @@ fetchData(event?: any, filters?: any): void {
     }
   });
 
-  // Check for cleared advanced filters
   Object.entries(advFilters).forEach(([key, val]) => {
     if (
       val === null ||
@@ -31,37 +28,37 @@ fetchData(event?: any, filters?: any): void {
     }
   });
 
-  // STEP 2️⃣ – combine new filters (table + adv)
-  const combined = { ...advFilters, ...tableFilters };
+  // STEP 2️⃣ - Remove cleared keys from previous state
+  clearedKeys.forEach((key) => {
+    delete prevFilters[key];
+    delete advFilters[key];
+  });
 
-  const updatedFilters: any = {};
-  Object.entries(combined).forEach(([key, val]) => {
+  // STEP 3️⃣ - Prepare valid table filters
+  const updatedTableFilters: any = {};
+  Object.entries(tableFilters).forEach(([key, val]) => {
     if (val != null && val !== '' && (!Array.isArray(val) || val.length > 0)) {
-      updatedFilters[key] = val;
+      updatedTableFilters[key] = val;
     }
   });
 
-  // STEP 3️⃣ – remove only cleared keys from previous filters
-  clearedKeys.forEach((key) => {
-    delete prevFilters[key];
+  // STEP 4️⃣ - Prepare valid advanced filters
+  const updatedAdvFilters: any = {};
+  Object.entries(advFilters).forEach(([key, val]) => {
+    if (val != null && val !== '' && (!Array.isArray(val) || val.length > 0)) {
+      updatedAdvFilters[key] = val;
+    }
   });
 
-  // STEP 4️⃣ – merge everything
-  const finalFilters = { ...prevFilters, ...updatedFilters };
+  // STEP 5️⃣ - Merge all (priority: old + adv + table)
+  const mergedFilters = { ...prevFilters, ...updatedAdvFilters, ...updatedTableFilters };
 
-  // STEP 5️⃣ – update and call API
-  this.filters = { ...finalFilters };
-  this.loaderService.show({ showMask: true });
+  // STEP 6️⃣ - Update references
+  this.filters = mergedFilters;
+  this.advFiltersList = updatedAdvFilters;
 
-  this.currentPage = event?.current || this.currentPage;
-  this.defaultPageSize = event?.pageSize || this.defaultPageSize;
-
-  const params = {
-    current: this.currentPage,
-    pageSize: this.defaultPageSize,
-    sorts: this.sortOptions,
-    filterDto: this.filters,
-  };
-
-  console.log('🧠 FINAL FILTERS:', this.filters);
-
+  // STEP 7️⃣ - Logging (optional)
+  console.log("✅ Final Filters:", this.filters);
+  console.log("✅ Adv Filters:", this.advFiltersList);
+  console.log("✅ Table Filters:", updatedTableFilters);
+  console.log("✅ Cleared Keys:", clearedKeys);
